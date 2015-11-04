@@ -12,15 +12,58 @@ class User{
 	
 	function createUser($hash, $create_email){
 
-		//Salvestame AB'i
-		$stmt = $this->connection->prepare("INSERT INTO user_sample (email, password) VALUES (?,?)");
-		//echo $mysqli->error;
-		//echo $stmt->error;
-		// asendame ? märgid, ss - s on string email, s on string password
-		$stmt->bind_param("ss", $create_email, $hash);
-		$stmt->execute();
-		$stmt->close();
+		// teen objekti
+		// seal on error, ->id ja ->message
+		// või success ja sellel on ->message
+		$response = new StdClass();
 		
+		// kas selline email on juba olemas
+		$stmt = $this->connection->prepare("SELECT id FROM user_sample WHERE email=?");
+		$stmt->bind_param("s", $create_email);
+		$stmt->bind_result($id);
+		$stmt->execute();
+		
+		// kas sain rea andmeid
+		if($stmt->fetch()){
+			
+			// annan errori, et selline email olemas
+			$error = new StdClass();
+			$error->id = 0;
+			$error->message = "Sellise epostiga kasutaja on juba olemas!";
+			
+			$response->error = $error;
+			
+			// kõik, mis on pärast returni enam ei käivitata
+			return $response;
+		}
+		
+		// panen eelmise päringu kinni
+		$stmt->close();
+	
+		$stmt = $this->connection->prepare("INSERT INTO user_sample (email, password) VALUES (?,?)");
+		$stmt->bind_param("ss", $create_email, $hash);
+		
+		// sai edukalt salvestatud
+		if($stmt->execute()){
+			
+			$success = new StdClass();
+			$success->message = "Kasutaja edukalt loodud!";
+			
+			$response->success = $success;
+			
+		}else{
+			
+			// midagi läks katki
+			$error = new StdClass();
+			$error->id = 1;
+			$error->message = "Midagi läks katki";
+			
+			$response->error = $error;
+			
+			
+		}
+		$stmt->close();
+		return $response;
 	}
 	
 	function loginUser($email, $hash){
