@@ -68,31 +68,63 @@ class User{
 	
 	function loginUser($email, $hash){
 		
-		$stmt = $this->connection->prepare("SELECT id, email FROM user_sample WHERE email=? AND password=?");
-		$stmt->bind_param("ss", $email, $hash);
+		$response = new StdClass();
+		
+		$stmt = $this->connection->prepare("SELECT id FROM user_sample WHERE email=?");
+		$stmt->bind_param("s", $email);
 				
 		//muutujad tulemustele
-		$stmt->bind_result($id_from_db, $email_from_db);
+		$stmt->bind_result($id);
 		$stmt->execute();
 				
 		//Kontrollin kas tulemusi leiti
-		if($stmt->fetch()){
+		if(!$stmt->fetch()){
 			// ab'i oli midagi
-			echo "Email ja parool õiged, kasutaja id=".$id_from_db;
+			// echo "Email ja parool õiged, kasutaja id=".$id_from_db;
 			
+			$error = new StdClass();
+			$error->id = 0;
+			$error->message = "Sellist kasutajat ei ole!";
+			$response->error = $error;
+			
+			return $response;
+			
+			/*
 			// tekitan sessiooni muutujad
 			$_SESSION["logged_in_user_id"] = $id_from_db;
 			$_SESSION["logged_in_user_email"] = $email_from_db;
 			
 			// suunan data.php lehele
 			header("Location: data.php");
+			*/
+		}
+		$stmt->close();
+		
+		$stmt = $this->connection->prepare("SELECT id, email FROM user_sample WHERE email=? AND password=?");
+		$stmt->bind_param("ss", $email, $hash);
+		$stmt->bind_result($id_from_db, $email_from_db);
+		$stmt->execute();
+			 
+		if($stmt->fetch()){
+
+			$success = new StdClass();
+			$success->message = "Kasutaja edukalt sisse logitud!";
+			
+			$response->success = $success;
+			
 			
 		}else{
-			// ei leidnud
-			echo "Wrong credentials!";
+			
+			$error = new StdClass();
+			$error->id = 1;
+			$error->message = "Parool vale!";
+			
+			$response->error = $error;
+			
 		}
 				
 		$stmt->close();
+		return $response;
 		
 	}
 

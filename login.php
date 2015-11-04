@@ -51,7 +51,7 @@
 				$hash = hash("sha512", $password);
 
 				// kasutaja sisselogimise funktsioon, failist functions.php
-				$User->loginUser($email, $hash);
+				$login_response = $User->loginUser($email, $hash);
 				
 			}
 
@@ -114,6 +114,17 @@
 <body>
 
   <h2>Log in</h2>
+  
+  <?php if(isset($login_response->error)): ?>
+  
+	<p style="color:red"> <?=$login_response->error->message;?> </p>
+  
+  <?php elseif(isset($login_response->success)): ?>
+  
+	<p style="color:green"> <?=$login_response->success->message;?> </p>
+  
+  <?php endif; ?>
+  
   <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" method="post" >
   	<input name="email" type="email" placeholder="E-post" value="<?php echo $email; ?>"> <?php echo $email_error; ?><br><br>
   	<input name="password" type="password" placeholder="Parool" value="<?php echo $password; ?>"> <?php echo $password_error; ?><br><br>
